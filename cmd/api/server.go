@@ -1,17 +1,20 @@
 package api
 
-import "net"
+import (
+	"fmt"
+	"net"
+)
 
 type Server struct {
-	Address string
-	Port    string
-	Socket  *net.Conn
+	Protocol string
+	Port     string
+	Socket   *net.Conn
 }
 
-func NewServer(address string, port string) *Server {
+func NewServer(protocol string, port string) *Server {
 	server := Server{
-		Address: address,
-		Port:    port,
+		Protocol: protocol,
+		Port:     port,
 	}
 
 	return &server
@@ -26,6 +29,7 @@ func (server *Server) Start() error {
 	}
 
 	for {
+		// accept connection from client
 		conn, err := listener.Accept()
 		if err != nil {
 			return err
@@ -36,14 +40,14 @@ func (server *Server) Start() error {
 		errCh := make(chan error)
 
 		// read request from client
-		go readRequest(conn, ch, errCh)
+		go processRequest(conn, ch, errCh)
 
 		// wait process and send response
-		go sendResponse(ch, errCh)
+		go sendResponse(conn, ch, errCh)
 	}
 }
 
-func readRequest(conn net.Conn, ch chan []byte, errCh chan error) {
+func processRequest(conn net.Conn, ch chan []byte, errCh chan error) {
 
 	buff := make([]byte, 0)
 
@@ -61,20 +65,26 @@ func readRequest(conn net.Conn, ch chan []byte, errCh chan error) {
 		}
 
 		if len(buff) == 1440 {
-			ch <- processFiles(buff)
-			buff = []byte{}
+			ch <- processFiles(&buff)
 			return
 		}
 	}
 }
 
-func processFiles(buff []byte) []byte {
-	return buff
+func processFiles(buff *[]byte) []byte {
+	*buff = make([]byte, 0)
+	return []byte("ok")
 }
 
-func sendResponse(ch chan []byte, errCh chan error) {
+func sendResponse(conn net.Conn, ch chan []byte, errCh chan error) {
 
-	for {
+	select {
+	case res := <-ch:
+		fmt.Println(res)
+		conn.Write(res)
 
+	case err := <-errCh:
+		fmt.Println(err)
+		conn.Write([]byte(err.Error()))
 	}
 }
