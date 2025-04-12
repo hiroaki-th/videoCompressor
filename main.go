@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	server := api.NewServer("tcp", "8080")
+	server := api.NewServer("tcp", ":8080")
 	err := server.Start()
 	if err != nil {
 		log.Fatal(err)

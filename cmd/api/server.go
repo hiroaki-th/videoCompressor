@@ -23,9 +23,9 @@ func NewServer(protocol string, port string) *Server {
 func (server *Server) Start() error {
 
 	// server listen
-	listener, err := net.Listen("tcp", server.Port)
+	listener, err := net.Listen(server.Protocol, server.Port)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	for {
@@ -65,15 +65,25 @@ func processRequest(conn net.Conn, ch chan []byte, errCh chan error) {
 		}
 
 		if len(buff) == 1440 {
-			ch <- processFiles(&buff)
+			res, err := processFiles(&buff)
+			if err != nil {
+				return
+			}
+
+			ch <- res
 			return
 		}
 	}
 }
 
-func processFiles(buff *[]byte) []byte {
+func processFiles(buff *[]byte) ([]byte, error) {
+	err := SaveFile(*buff)
+	if err != nil {
+		return nil, err
+	}
+
 	*buff = make([]byte, 0)
-	return []byte("ok")
+	return []byte("ok"), nil
 }
 
 func sendResponse(conn net.Conn, ch chan []byte, errCh chan error) {
