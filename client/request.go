@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func createRequest(file *os.File) []byte {
+func CreateRequest(file *os.File) []byte {
 
 	filename := []byte(file.Name())
 	mediaType := []byte(strings.Split(file.Name(), ".")[1])

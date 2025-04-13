@@ -46,13 +46,13 @@ func main() {
 			}
 		}()
 
-		file, err := selectFile(reader)
+		file, err := SelectFile(reader)
 		if err != nil {
 			fmt.Printf("ERROR: %s", err)
 			fmt.Printf("please try again \n\n")
 			continue
 		}
 
-		byteMessage <- createRequest(file)
+		byteMessage <- CreateRequest(file)
 	}
 }
