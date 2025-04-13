@@ -16,23 +16,20 @@ func main() {
 		os.Exit(-1)
 	}
 
+	reader := bufio.NewReader(os.Stdin)
+	byteMessage := make(chan []byte)
+
 	for {
 
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Println("please input filename to send server")
-		filename, err := reader.ReadString('\n')
-		if err != nil {
-			panic(err)
-		}
-
-		file, err := os.Open(filename)
-		if err != nil {
-			fmt.Println(err)
-			fmt.Println("please try again")
-			continue
-		}
-
-		fmt.Println(file)
+		go func() {
+			for {
+				message := <-byteMessage
+				_, err := conn.Write(message)
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
+		}()
 
 		go func() {
 			for {
@@ -48,5 +45,14 @@ func main() {
 				}
 			}
 		}()
+
+		file, err := selectFile(reader)
+		if err != nil {
+			fmt.Printf("ERROR: %s", err)
+			fmt.Printf("please try again \n\n")
+			continue
+		}
+
+		byteMessage <- createRequest(file)
 	}
 }
