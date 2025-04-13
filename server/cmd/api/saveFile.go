@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-const savePath string = "videoCompressor/tmp/"
+const path string = "../../tmp/"
 
 type saveFileJson struct {
 	FileName string
@@ -32,7 +32,7 @@ func SaveFile(buff []byte) error {
 	mediaTypeStr := string(mediaType)
 	fmt.Println(mediaTypeStr)
 
-	err = os.WriteFile(jsonData.FileName, payload, os.FileMode(os.O_APPEND)|os.FileMode(os.O_CREATE)|os.FileMode(os.O_RDWR))
+	err = os.WriteFile(path+jsonData.FileName, payload, os.FileMode(os.O_APPEND)|os.FileMode(os.O_CREATE)|os.FileMode(os.O_RDWR))
 	if err != nil {
 		return err
 	}

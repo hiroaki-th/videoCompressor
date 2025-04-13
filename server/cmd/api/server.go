@@ -90,7 +90,6 @@ func sendResponse(conn net.Conn, ch chan []byte, errCh chan error) {
 
 	select {
 	case res := <-ch:
-		fmt.Println(res)
 		conn.Write(res)
 
 	case err := <-errCh:
