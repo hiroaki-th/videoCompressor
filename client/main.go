@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"videoCompressorClient/cmd"
 )
 
 func main() {
@@ -46,13 +47,13 @@ func main() {
 			}
 		}()
 
-		file, err := SelectFile(reader)
+		file, err := cmd.SelectFile(reader)
 		if err != nil {
 			fmt.Printf("ERROR: %s", err)
 			fmt.Printf("please try again \n\n")
 			continue
 		}
 
-		byteMessage <- CreateRequest(file)
+		byteMessage <- cmd.CreateRequest(file)
 	}
 }
