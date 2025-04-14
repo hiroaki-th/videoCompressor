@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"bufio"
@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func selectFile(reader *bufio.Reader) (*os.File, error) {
+func SelectFile(reader *bufio.Reader) (*os.File, error) {
 	fmt.Println("please input filename to send server")
 	filename, err := reader.ReadString('\n')
 	if err != nil {

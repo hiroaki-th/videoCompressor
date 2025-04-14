@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"videoCompressorClient/cmd"
 )
 
 func main() {
@@ -15,6 +16,7 @@ func main() {
 		log.Fatal(err)
 		os.Exit(-1)
 	}
+	defer conn.Close()
 
 	reader := bufio.NewReader(os.Stdin)
 	byteMessage := make(chan []byte)
@@ -37,7 +39,7 @@ func main() {
 				size, err := conn.Read(buff)
 				if err != nil {
 					fmt.Println(err)
-					continue
+					os.Exit(-1)
 				}
 
 				if size > 0 {
@@ -46,13 +48,13 @@ func main() {
 			}
 		}()
 
-		file, err := selectFile(reader)
+		file, err := cmd.SelectFile(reader)
 		if err != nil {
 			fmt.Printf("ERROR: %s", err)
 			fmt.Printf("please try again \n\n")
 			continue
 		}
 
-		byteMessage <- createRequest(file)
+		byteMessage <- cmd.CreateRequest(file)
 	}
 }

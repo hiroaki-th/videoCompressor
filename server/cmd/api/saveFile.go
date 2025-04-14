@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -10,18 +9,17 @@ import (
 const path string = "../../tmp/"
 
 type saveFileJson struct {
-	FileName string
+	Name string `json:"name"`
 }
 
 func SaveFile(buff []byte) error {
+	jsonSize := int(buff[0])
+	mediaTypeSize := int(buff[1])
+	payloadSize := int(buff[2])
 
-	jsonSize := binary.BigEndian.Uint64(buff[:5])
-	mediaTypeSize := binary.BigEndian.Uint64(buff[5:6])
-	payloadSize := binary.BigEndian.Uint64(buff[6:7])
-
-	jsonBin := buff[7:jsonSize]
-	mediaType := buff[7+jsonSize : 7+jsonSize+mediaTypeSize]
-	payload := buff[7+jsonSize+mediaTypeSize : 7+jsonSize+mediaTypeSize+payloadSize]
+	jsonBin := buff[3:jsonSize]
+	mediaType := buff[3+jsonSize : 3+jsonSize+mediaTypeSize]
+	payload := buff[3+jsonSize+mediaTypeSize : 3+jsonSize+mediaTypeSize+payloadSize]
 
 	jsonData := saveFileJson{}
 	err := json.Unmarshal(jsonBin, &jsonData)
@@ -32,7 +30,7 @@ func SaveFile(buff []byte) error {
 	mediaTypeStr := string(mediaType)
 	fmt.Println(mediaTypeStr)
 
-	err = os.WriteFile(path+jsonData.FileName, payload, os.FileMode(os.O_APPEND)|os.FileMode(os.O_CREATE)|os.FileMode(os.O_RDWR))
+	err = os.WriteFile(path+jsonData.Name, payload, os.FileMode(os.O_APPEND)|os.FileMode(os.O_CREATE)|os.FileMode(os.O_RDWR))
 	if err != nil {
 		return err
 	}

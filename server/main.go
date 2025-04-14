@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"os"
-	"videoCompressor/server/cmd/api"
+	"videoCompressorServer/cmd/api"
 )
 
 func main() {
