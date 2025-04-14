@@ -52,7 +52,7 @@ func processRequest(conn net.Conn, ch chan []byte, errCh chan error) {
 	buff := make([]byte, 0)
 
 	for {
-		tmpBuff := make([]byte, 0)
+		tmpBuff := make([]byte, 1000)
 
 		size, err := conn.Read(tmpBuff)
 		if err != nil {
@@ -64,9 +64,10 @@ func processRequest(conn net.Conn, ch chan []byte, errCh chan error) {
 			buff = append(buff, tmpBuff...)
 		}
 
-		if len(buff) == 1440 {
+		if len(buff) == 1000 {
 			res, err := processFiles(&buff)
 			if err != nil {
+				fmt.Println("processError: ", err)
 				return
 			}
 
