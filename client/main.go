@@ -35,7 +35,7 @@ func main() {
 
 		go func() {
 			for {
-				buff := make([]byte, 1440)
+				buff := make([]byte, 0, 1440)
 				size, err := conn.Read(buff)
 				if err != nil {
 					fmt.Println(err)
