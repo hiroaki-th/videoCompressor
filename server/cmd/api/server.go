@@ -35,16 +35,19 @@ func (server *Server) Start() error {
 			return err
 		}
 
-		ch := make(chan []byte)
+		fCh := make(chan []byte)
 		errCh := make(chan error)
+		resCh := make(chan []byte)
 
-		go processRequest(conn, ch, errCh)
+		go processRequest(conn, fCh, errCh)
 
-		go sendResponse(conn, ch, errCh)
+		go processFiles(fCh, resCh, errCh)
+
+		go sendResponse(conn, resCh, errCh)
 	}
 }
 
-func processRequest(conn net.Conn, ch chan []byte, errCh chan error) {
+func processRequest(conn net.Conn, fCh chan []byte, errCh chan error) {
 
 	buff := make([]byte, 0)
 	totalSize := 0
@@ -59,53 +62,43 @@ func processRequest(conn net.Conn, ch chan []byte, errCh chan error) {
 		}
 
 		if size > 0 {
-			buff = append(buff, tmpBuff...)
+			buff = append(buff, tmpBuff[:size]...)
 		}
 
 		if len(buff) > 11 {
 			if totalSize == 0 {
 				totalSize = getTotalSize(buff)
 			}
-
 			if totalSize != 0 && totalSize > PACKET_SIZE {
-				fmt.Printf("buff length %d, totalSize %d\n", len(buff), totalSize)
-				if len(buff) > totalSize {
-					res, err := processFiles(&buff)
-					if err != nil {
-						fmt.Println("processError: ", err)
-						return
-					}
-
-					ch <- res
+				if len(buff) == totalSize {
+					fCh <- buff
 					return
 				}
 			} else if totalSize != 0 && totalSize < PACKET_SIZE {
-				res, err := processFiles(&buff)
-				if err != nil {
-					fmt.Println("processError: ", err)
-					return
-				}
-				ch <- res
+				fCh <- buff
 				return
 			}
 		}
 	}
 }
 
-func processFiles(buff *[]byte) ([]byte, error) {
-	err := SaveFile(*buff)
-	if err != nil {
-		return nil, err
-	}
+func processFiles(fCh chan []byte, resCh chan []byte, errCh chan error) {
+	for {
+		file := <-fCh
+		err := SaveFile(file)
+		if err != nil {
+			errCh <- err
+			return
+		}
 
-	*buff = make([]byte, 0)
-	return []byte("ok"), nil
+		resCh <- []byte("ok")
+	}
 }
 
-func sendResponse(conn net.Conn, ch chan []byte, errCh chan error) {
+func sendResponse(conn net.Conn, resCh chan []byte, errCh chan error) {
 
 	select {
-	case res := <-ch:
+	case res := <-resCh:
 		conn.Write(res)
 
 	case err := <-errCh:

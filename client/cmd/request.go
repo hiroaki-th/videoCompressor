@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -61,6 +62,7 @@ func CreateRequest(file *os.File) []byte {
 	if err != nil {
 		return nil
 	}
+	fmt.Println(size)
 	header.PayloadSize = uint64(size)
 	body.Payload = fileBody[:size]
 
@@ -92,32 +94,26 @@ func getByteSliceFromNumber(number interface{}) []byte {
 	result := make([]byte, 0)
 	switch t := number.(type) {
 	case uint64:
-		for t > 255 {
-			result = append([]byte{byte(t)}, result...)
-			t = t / 255
+		tmpResult := make([]byte, 8)
+		binary.BigEndian.PutUint64(tmpResult, t)
+		for len(tmpResult) != 8 {
+			tmpResult = append([]byte{byte(0)}, tmpResult...)
 		}
-		result = append([]byte{byte(t)}, result...)
-		for len(result) != 8 {
-			result = append([]byte{byte(0)}, result...)
-		}
+		result = tmpResult
 	case uint32:
-		for t > 255 {
-			result = append([]byte{byte(t)}, result...)
-			t = t / 255
+		tmpResult := make([]byte, 4)
+		binary.BigEndian.PutUint32(tmpResult, t)
+		for len(tmpResult) != 4 {
+			tmpResult = append([]byte{byte(0)}, tmpResult...)
 		}
-		result = append([]byte{byte(t)}, result...)
-		for len(result) != 4 {
-			result = append([]byte{byte(0)}, result...)
-		}
+		result = tmpResult
 	case uint16:
-		for t > 255 {
-			result = append([]byte{byte(t)}, result...)
-			t = t / 255
+		tmpResult := make([]byte, 2)
+		binary.BigEndian.PutUint16(tmpResult, t)
+		for len(tmpResult) != 2 {
+			tmpResult = append([]byte{byte(0)}, tmpResult...)
 		}
-		result = append([]byte{byte(t)}, result...)
-		for len(result) != 2 {
-			result = append([]byte{byte(0)}, result...)
-		}
+		result = tmpResult
 	case uint8:
 		result = append(result, t)
 	}

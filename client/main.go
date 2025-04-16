@@ -46,7 +46,6 @@ func main() {
 		go func() {
 			for {
 				message := <-byteMessage
-				fmt.Println(len(message))
 				_, err := conn.Write(message)
 				if err != nil {
 					fmt.Println(err)

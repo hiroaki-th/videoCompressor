@@ -14,7 +14,6 @@ type saveFileJson struct {
 }
 
 func SaveFile(buff []byte) error {
-	fmt.Println("processing")
 	jsonSize := int(binary.BigEndian.Uint16(buff[:2]))
 	mediaTypeSize := int(int8(buff[2]))
 	payloadSize := int(binary.BigEndian.Uint64(buff[3:11]))
@@ -43,9 +42,14 @@ func SaveFile(buff []byte) error {
 }
 
 func getTotalSize(buff []byte) int {
+	fmt.Println(buff[:11])
 	jsonSize := int(binary.BigEndian.Uint16(buff[:2]))
 	mediaTypeSize := int(int8(buff[2]))
 	payloadSize := int(binary.BigEndian.Uint64(buff[3:11]))
+
+	fmt.Println(jsonSize)
+	fmt.Println(mediaTypeSize)
+	fmt.Println(payloadSize)
 
 	return 11 + jsonSize + mediaTypeSize + payloadSize
 }
