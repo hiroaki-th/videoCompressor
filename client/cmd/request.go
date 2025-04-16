@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	myFile "videoCompressorClient/file"
 )
 
 type Header struct {
@@ -19,8 +21,15 @@ type Body struct {
 	Payload   []byte
 }
 
-type FileJson struct {
-	Name string `json:"name"`
+func (header *Header) htoByteSlice() []byte {
+	byteSlice := make([]byte, 0)
+
+	return setFieldValue(byteSlice, header.JsonSize, header.MediaTypeSize, header.PayloadSize)
+}
+
+func (body *Body) btoByteSlice() []byte {
+	byteSlice := make([]byte, 0)
+	return setFieldValue(byteSlice, body.Json, body.MediaType, body.Payload)
 }
 
 func CreateRequest(file *os.File) []byte {
@@ -30,7 +39,7 @@ func CreateRequest(file *os.File) []byte {
 
 	// get json and jsonSize
 	filename := string([]byte(file.Name()))
-	fileJson := FileJson{
+	fileJson := myFile.FileJson{
 		Name: filename,
 	}
 	byteJson, err := json.Marshal(fileJson)
@@ -46,8 +55,8 @@ func CreateRequest(file *os.File) []byte {
 	header.MediaTypeSize = uint8(len(mediaType))
 	body.MediaType = mediaType
 
-	// get payload and payloadSize
-	fileBody := make([]byte, 100000000)
+	// get payload and payloadSize, limit is 10MB
+	fileBody := make([]byte, 104857600)
 	size, err := file.Read(fileBody)
 	if err != nil {
 		return nil
@@ -77,17 +86,6 @@ func setFieldValue(base []byte, value ...interface{}) []byte {
 		}
 	}
 	return base
-}
-
-func (header *Header) htoByteSlice() []byte {
-	byteSlice := make([]byte, 0)
-
-	return setFieldValue(byteSlice, header.JsonSize, header.MediaTypeSize, header.PayloadSize)
-}
-
-func (body *Body) btoByteSlice() []byte {
-	byteSlice := make([]byte, 0)
-	return setFieldValue(byteSlice, body.Json, body.MediaType, body.Payload)
 }
 
 func getByteSliceFromNumber(number interface{}) []byte {

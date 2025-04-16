@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"os"
 )
 
@@ -13,6 +14,7 @@ type saveFileJson struct {
 }
 
 func SaveFile(buff []byte) error {
+	fmt.Println("processing")
 	jsonSize := int(binary.BigEndian.Uint16(buff[:2]))
 	mediaTypeSize := int(int8(buff[2]))
 	payloadSize := int(binary.BigEndian.Uint64(buff[3:11]))
@@ -38,4 +40,12 @@ func SaveFile(buff []byte) error {
 	}
 
 	return nil
+}
+
+func getTotalSize(buff []byte) int {
+	jsonSize := int(binary.BigEndian.Uint16(buff[:2]))
+	mediaTypeSize := int(int8(buff[2]))
+	payloadSize := int(binary.BigEndian.Uint64(buff[3:11]))
+
+	return 11 + jsonSize + mediaTypeSize + payloadSize
 }

@@ -1,4 +1,4 @@
-package cmd
+package file
 
 import (
 	"bufio"
@@ -6,6 +6,10 @@ import (
 	"os"
 	"strings"
 )
+
+type FileJson struct {
+	Name string `json:"name"`
+}
 
 func SelectFile(reader *bufio.Reader) (*os.File, error) {
 	fmt.Println("please input filename to send server")

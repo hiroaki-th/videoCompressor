@@ -5,6 +5,8 @@ import (
 	"net"
 )
 
+const PACKET_SIZE int = 1440
+
 type Server struct {
 	Protocol string
 	Port     string
@@ -22,27 +24,22 @@ func NewServer(protocol string, port string) *Server {
 
 func (server *Server) Start() error {
 
-	// server listen
 	listener, err := net.Listen(server.Protocol, server.Port)
 	if err != nil {
 		return err
 	}
 
 	for {
-		// accept connection from client
 		conn, err := listener.Accept()
 		if err != nil {
 			return err
 		}
 
-		// declare channel
 		ch := make(chan []byte)
 		errCh := make(chan error)
 
-		// read request from client
 		go processRequest(conn, ch, errCh)
 
-		// wait process and send response
 		go sendResponse(conn, ch, errCh)
 	}
 }
@@ -50,9 +47,10 @@ func (server *Server) Start() error {
 func processRequest(conn net.Conn, ch chan []byte, errCh chan error) {
 
 	buff := make([]byte, 0)
+	totalSize := 0
 
 	for {
-		tmpBuff := make([]byte, 1000)
+		tmpBuff := make([]byte, PACKET_SIZE)
 
 		size, err := conn.Read(tmpBuff)
 		if err != nil {
@@ -64,15 +62,32 @@ func processRequest(conn net.Conn, ch chan []byte, errCh chan error) {
 			buff = append(buff, tmpBuff...)
 		}
 
-		if len(buff) == 1000 {
-			res, err := processFiles(&buff)
-			if err != nil {
-				fmt.Println("processError: ", err)
-				return
+		if len(buff) > 11 {
+			if totalSize == 0 {
+				totalSize = getTotalSize(buff)
 			}
 
-			ch <- res
-			return
+			if totalSize != 0 && totalSize > PACKET_SIZE {
+				fmt.Printf("buff length %d, totalSize %d\n", len(buff), totalSize)
+				if len(buff) > totalSize {
+					res, err := processFiles(&buff)
+					if err != nil {
+						fmt.Println("processError: ", err)
+						return
+					}
+
+					ch <- res
+					return
+				}
+			} else if totalSize != 0 && totalSize < PACKET_SIZE {
+				res, err := processFiles(&buff)
+				if err != nil {
+					fmt.Println("processError: ", err)
+					return
+				}
+				ch <- res
+				return
+			}
 		}
 	}
 }
