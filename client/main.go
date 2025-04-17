@@ -41,50 +41,54 @@ func main() {
 
 	var ok bool = true
 
+	// send request to server
+	go func() {
+		for {
+			message := <-byteMessage
+			_, err := conn.Write(message)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+	}()
+
+	// process response from server
+	go func() {
+		for {
+			buff := make([]byte, 1440)
+			size, err := conn.Read(buff)
+			if err != nil {
+				fmt.Println(err)
+				y, _ := question("do you want format other file?", reader)
+				if y {
+					ok = true
+					return
+				}
+			}
+
+			if size > 0 {
+				fmt.Println("data")
+				fmt.Println(string(buff))
+				y, _ := question("do you want format other file?", reader)
+				if y {
+					ok = true
+				}
+				return
+			}
+		}
+	}()
+
+	// select file
 	for {
-
-		go func() {
-			for {
-				message := <-byteMessage
-				_, err := conn.Write(message)
-				if err != nil {
-					fmt.Println(err)
-				}
-			}
-		}()
-
-		go func() {
-			for {
-				buff := make([]byte, 0, 1440)
-				size, err := conn.Read(buff)
-				if err != nil {
-					fmt.Println(err)
-					y, _ := question("do you want format other file?", reader)
-					if y {
-						ok = true
-					}
-
-				}
-
-				if size > 0 {
-					fmt.Println(string(buff))
-					y, _ := question("do you want format other file?", reader)
-					if y {
-						ok = true
-					}
-				}
-			}
-		}()
-
 		if ok {
 			file, err := file.SelectFile(reader)
 			if err != nil {
 				fmt.Printf("ERROR: %s", err)
 				fmt.Printf("please try again \n\n")
+				continue
 			}
 			byteMessage <- cmd.CreateRequest(file)
 			ok = false
-
 		}
 	}
 }

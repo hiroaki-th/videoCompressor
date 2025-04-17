@@ -1,4 +1,4 @@
-package cmd
+package utils
 
 import (
 	"encoding/binary"
@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
-
-	myFile "videoCompressorClient/file"
+	"time"
 )
 
 type Header struct {
+	Status        uint8
 	JsonSize      uint16
 	MediaTypeSize uint8
 	PayloadSize   uint64
@@ -20,6 +20,17 @@ type Body struct {
 	Json      []byte
 	MediaType []byte
 	Payload   []byte
+}
+
+type ResponseJson struct {
+	Status   uint8
+	FileName string
+}
+
+type ErrorJson struct {
+	Status    uint8
+	Message   string
+	TimeStamp time.Time
 }
 
 func (header *Header) htoByteSlice() []byte {
@@ -33,18 +44,22 @@ func (body *Body) btoByteSlice() []byte {
 	return setFieldValue(byteSlice, body.Json, body.MediaType, body.Payload)
 }
 
-func CreateRequest(file *os.File) []byte {
+func NewResponse(status uint8, file *os.File, errs ...error) []byte {
+
+	if len(errs) > 0 {
+		return ErrorResponse(status, errs...)
+	}
 
 	header := Header{}
 	body := Body{}
 
 	// get json and jsonSize
 	filename := string([]byte(file.Name()))
-	fileJson := myFile.FileJson{
-		Name:   filename,
-		Format: "format",
+	respJson := ResponseJson{
+		Status:   status,
+		FileName: filename,
 	}
-	byteJson, err := json.Marshal(fileJson)
+	byteJson, err := json.Marshal(respJson)
 	if err != nil {
 		fmt.Println(err)
 		return nil
@@ -66,8 +81,45 @@ func CreateRequest(file *os.File) []byte {
 	header.PayloadSize = uint64(size)
 	body.Payload = fileBody[:size]
 
-	request := make([]byte, 0)
-	return binaryRequest(request, header, body)
+	response := make([]byte, 0)
+	return binaryRequest(response, header, body)
+}
+
+func ErrorResponse(status uint8, errs ...error) []byte {
+
+	header := Header{}
+	body := Body{}
+
+	// create error message
+	message := ""
+	for _, e := range errs {
+		message = message + e.Error()
+	}
+
+	// create Json and get Size
+	respJson := ErrorJson{
+		Status:    status,
+		Message:   message,
+		TimeStamp: time.Now(),
+	}
+	byteJson, err := json.Marshal(respJson)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	header.JsonSize = uint16(len(byteJson))
+	body.Json = byteJson
+
+	// get mediaType and mediaTypeSize
+	header.MediaTypeSize = uint8(0)
+	body.MediaType = nil
+
+	// get payload and payloadSize, limit is 10MB
+	header.PayloadSize = uint64(0)
+	body.Payload = nil
+
+	response := make([]byte, 0)
+	return binaryRequest(response, header, body)
 }
 
 func binaryRequest(request []byte, header Header, body Body) []byte {

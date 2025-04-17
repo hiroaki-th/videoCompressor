@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net"
+	"videoCompressorServer/utils"
 )
 
 const PACKET_SIZE int = 1440
@@ -85,13 +86,13 @@ func processRequest(conn net.Conn, fCh chan []byte, errCh chan error) {
 func processFiles(fCh chan []byte, resCh chan []byte, errCh chan error) {
 	for {
 		file := <-fCh
-		err := SaveFile(file)
+		formatFile, err := SaveFile(file)
 		if err != nil {
 			errCh <- err
-			return
+			continue
 		}
 
-		resCh <- []byte("ok")
+		resCh <- utils.NewResponse(uint8(200), formatFile)
 	}
 }
 
@@ -99,10 +100,15 @@ func sendResponse(conn net.Conn, resCh chan []byte, errCh chan error) {
 
 	select {
 	case res := <-resCh:
-		conn.Write(res)
+		_, err := conn.Write(res)
+		if err != nil {
+			fmt.Println(err)
+		}
 
 	case err := <-errCh:
-		fmt.Println(err)
-		conn.Write([]byte(err.Error()))
+		conn.Write(utils.NewResponse(uint8(0), nil, err))
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }

@@ -8,11 +8,12 @@ import (
 )
 
 type FileJson struct {
-	Name string `json:"name"`
+	Name   string `json:"name"`
+	Format string `json:"format"`
 }
 
 func SelectFile(reader *bufio.Reader) (*os.File, error) {
-	fmt.Println("please input filename to send server")
+	fmt.Printf("please input filename to send server\n\n")
 	filename, err := reader.ReadString('\n')
 	if err != nil {
 		return nil, err
