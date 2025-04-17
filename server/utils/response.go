@@ -64,7 +64,8 @@ func NewResponse(status uint8, file *os.File, errs ...error) []byte {
 	body.Json = byteJson
 
 	// get mediaType and mediaTypeSize
-	mediaType := []byte(strings.Split(file.Name(), ".")[1])
+	splitFilename := (strings.Split(file.Name(), "."))
+	mediaType := []byte(splitFilename[len(splitFilename)-1])
 	header.MediaTypeSize = uint8(len(mediaType))
 	body.MediaType = mediaType
 
@@ -78,7 +79,7 @@ func NewResponse(status uint8, file *os.File, errs ...error) []byte {
 	body.Payload = fileBody[:size]
 
 	response := make([]byte, 0)
-	return binaryRequest(response, header, body)
+	return binaryResponse(response, header, body)
 }
 
 func ErrorResponse(status uint8, errs ...error) []byte {
@@ -115,10 +116,10 @@ func ErrorResponse(status uint8, errs ...error) []byte {
 	body.Payload = nil
 
 	response := make([]byte, 0)
-	return binaryRequest(response, header, body)
+	return binaryResponse(response, header, body)
 }
 
-func binaryRequest(request []byte, header Header, body Body) []byte {
+func binaryResponse(request []byte, header Header, body Body) []byte {
 	return setFieldValue(request, header.htoByteSlice(), body.btoByteSlice())
 }
 

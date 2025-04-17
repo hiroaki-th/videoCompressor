@@ -40,6 +40,19 @@ func SaveFile(buff []byte) (*os.File, error) {
 	return file, nil
 }
 
+func FormatFile(file *os.File) (*os.File, error) {
+	return nil, nil
+}
+
+func mockFile() (*os.File, error) {
+	file, err := os.Open(path + "response.txt")
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
+}
+
 func getTotalSize(buff []byte) int {
 	jsonSize := int(binary.BigEndian.Uint16(buff[:2]))
 	mediaTypeSize := int(int8(buff[2]))
