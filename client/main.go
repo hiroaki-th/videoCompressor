@@ -54,6 +54,8 @@ func main() {
 
 	// process response from server
 	go func() {
+		response := make([]byte, 0)
+		totalSize := 0
 		for {
 			buff := make([]byte, 1440)
 			size, err := conn.Read(buff)
@@ -62,19 +64,31 @@ func main() {
 				y, _ := question("do you want format other file?", reader)
 				if y {
 					ok = true
-					return
+					response = make([]byte, 0)
+					totalSize = 0
 				}
 			}
 
 			if size > 0 {
-				fmt.Println("data")
-				fmt.Println(string(buff))
-				y, _ := question("do you want format other file?", reader)
-				if y {
-					ok = true
-				}
-				return
+				response = append(response, buff[:size]...)
 			}
+
+			if len(response) > 11 && totalSize == 0 {
+				if totalSize == 0 {
+					totalSize = cmd.GetTotalSize(response)
+				}
+
+				if totalSize == len(response) {
+					cmd.ProcessResponse(response)
+					y, _ := question("do you want format other file?", reader)
+					if y {
+						ok = true
+						response = make([]byte, 0)
+						totalSize = 0
+					}
+				}
+			}
+
 		}
 	}()
 
