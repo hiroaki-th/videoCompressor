@@ -23,14 +23,10 @@ type Body struct {
 }
 
 type ResponseJson struct {
-	Status   uint8
-	FileName string
-}
-
-type ErrorJson struct {
-	Status    uint8
-	Message   string
-	TimeStamp time.Time
+	Status    uint8     `json:"status"`
+	FileName  string    `json:"filename"`
+	Message   string    `json:"message"`
+	TimeStamp time.Time `json:"timestamp"`
 }
 
 func (header *Header) htoByteSlice() []byte {
@@ -97,7 +93,7 @@ func ErrorResponse(status uint8, errs ...error) []byte {
 	}
 
 	// create Json and get Size
-	respJson := ErrorJson{
+	respJson := ResponseJson{
 		Status:    status,
 		Message:   message,
 		TimeStamp: time.Now(),
