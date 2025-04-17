@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"os"
 	"time"
 )
@@ -22,21 +23,21 @@ func ProcessResponse(buff []byte) error {
 	payloadSize := int(binary.BigEndian.Uint64(buff[3:11]))
 
 	jsonBin := buff[11 : 11+jsonSize]
-	_ = buff[11+jsonSize : 11+jsonSize+mediaTypeSize]
-	payload := buff[11+jsonSize+mediaTypeSize : 11+jsonSize+mediaTypeSize+payloadSize]
-
 	jsonData := ResponseJson{}
 	err := json.Unmarshal(jsonBin, &jsonData)
 	if err != nil {
 		return err
 	}
+	fmt.Printf("{\n status: %d,\n message: %s,\n}\n\n", jsonData.Status, jsonData.Message)
 
+	mediaType := "bin"
 	if mediaTypeSize > 0 {
-		_ = buff[11+jsonSize : 11+jsonSize+mediaTypeSize]
+		mediaType = string(buff[11+jsonSize : 11+jsonSize+mediaTypeSize])
 	}
 
 	if payloadSize > 0 {
-		file, err := os.Create(path + jsonData.FileName)
+		payload := buff[11+jsonSize+mediaTypeSize : 11+jsonSize+mediaTypeSize+payloadSize]
+		file, err := os.Create(path + "formattedFile." + mediaType)
 		if err != nil {
 			return err
 		}

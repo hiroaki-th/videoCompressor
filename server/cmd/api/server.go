@@ -86,13 +86,24 @@ func processRequest(conn net.Conn, fCh chan []byte, errCh chan error) {
 func processFiles(fCh chan []byte, resCh chan []byte, errCh chan error) {
 	for {
 		file := <-fCh
-		formatFile, err := SaveFile(file)
+		savedFile, err := SaveFile(file)
+		if err != nil {
+			errCh <- err
+			continue
+		}
+		_, err = FormatFile(savedFile)
 		if err != nil {
 			errCh <- err
 			continue
 		}
 
-		resCh <- utils.NewResponse(uint8(200), formatFile)
+		mock, err := mockFile()
+		if err != nil {
+			errCh <- err
+			continue
+		}
+
+		resCh <- utils.NewResponse(uint8(200), mock)
 	}
 }
 
