@@ -9,7 +9,12 @@ import (
 const path string = "./tmp/"
 
 type saveFileJson struct {
-	Name string `json:"name"`
+	Name       string `json:"name"`
+	Extension  string `json:"extension"`
+	Resolution string `json:"resolution"`
+	FromSecond int    `json:"from-second"`
+	ToSecond   int    `json:"to-second"`
+	VF         string `json:"vf"`
 }
 
 func SaveFile(buff []byte) (*os.File, error) {

@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	myFile "videoCompressorClient/file"
+	myfile "videoCompressorClient/file"
 )
 
 type Header struct {
@@ -33,17 +33,14 @@ func (body *Body) btoByteSlice() []byte {
 	return setFieldValue(byteSlice, body.Json, body.MediaType, body.Payload)
 }
 
-func CreateRequest(file *os.File) []byte {
+func CreateRequest(file *os.File, fileJson *myfile.FileJson) []byte {
 
 	header := Header{}
 	body := Body{}
 
 	// get json and jsonSize
 	filename := string([]byte(file.Name()))
-	fileJson := myFile.FileJson{
-		Name:   filename,
-		Format: "format",
-	}
+	fileJson.Name = filename
 	byteJson, err := json.Marshal(fileJson)
 	if err != nil {
 		fmt.Println(err)

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"videoCompressorClient/cmd"
 	"videoCompressorClient/file"
+	myfile "videoCompressorClient/file"
 )
 
 func question(message string, reader *bufio.Reader) (bool, error) {
@@ -80,12 +81,6 @@ func main() {
 
 				if totalSize == len(response) {
 					cmd.ProcessResponse(response)
-					y, _ := question("do you want format other file?", reader)
-					if y {
-						ok = true
-						response = make([]byte, 0)
-						totalSize = 0
-					}
 				}
 			}
 
@@ -101,7 +96,15 @@ func main() {
 				fmt.Printf("please try again \n\n")
 				continue
 			}
-			byteMessage <- cmd.CreateRequest(file)
+
+			json, err := myfile.SelectFormat(reader)
+			if err != nil {
+				fmt.Printf("ERROR: %s", err)
+				fmt.Printf("please try again \n\n")
+				continue
+			}
+
+			byteMessage <- cmd.CreateRequest(file, json)
 			ok = false
 		}
 	}
