@@ -48,6 +48,7 @@ func ProcessResponse(buff []byte) error {
 		}
 	}
 
+	os.Exit(0)
 	return nil
 }
 
