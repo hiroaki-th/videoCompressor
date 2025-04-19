@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -15,16 +16,22 @@ type ResponseJson struct {
 	TimeStamp time.Time `json:"timestamp"`
 }
 
-const path string = "./tmp/"
-
 func ProcessResponse(buff []byte) error {
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+	filePath := filepath.Join(homeDir, "Downloads/")
+	fmt.Println(filePath)
+
 	jsonSize := int(binary.BigEndian.Uint16(buff[:2]))
 	mediaTypeSize := int(int8(buff[2]))
 	payloadSize := int(binary.BigEndian.Uint64(buff[3:11]))
 
 	jsonBin := buff[11 : 11+jsonSize]
 	jsonData := ResponseJson{}
-	err := json.Unmarshal(jsonBin, &jsonData)
+	err = json.Unmarshal(jsonBin, &jsonData)
 	if err != nil {
 		return err
 	}
@@ -37,7 +44,7 @@ func ProcessResponse(buff []byte) error {
 
 	if payloadSize > 0 {
 		payload := buff[11+jsonSize+mediaTypeSize : 11+jsonSize+mediaTypeSize+payloadSize]
-		file, err := os.Create(path + "formattedFile." + mediaType)
+		file, err := os.Create(filePath + "formattedFile." + mediaType)
 		if err != nil {
 			return err
 		}
@@ -48,6 +55,7 @@ func ProcessResponse(buff []byte) error {
 		}
 	}
 
+	fmt.Println("successfully downloaded file. please check /Users[Home]/Downloads/")
 	os.Exit(0)
 	return nil
 }

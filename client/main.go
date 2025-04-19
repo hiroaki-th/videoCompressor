@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 	"videoCompressorClient/cmd"
-	"videoCompressorClient/file"
 	myfile "videoCompressorClient/file"
 )
 
@@ -90,16 +89,16 @@ func main() {
 	// select file
 	for {
 		if ok {
-			file, err := file.SelectFile(reader)
+			file, err := myfile.SelectFile(reader)
 			if err != nil {
-				fmt.Printf("ERROR: %s", err)
+				fmt.Printf("ERROR: %s\n", err)
 				fmt.Printf("please try again \n\n")
 				continue
 			}
 
-			json, err := myfile.SelectFormat(reader)
+			json, err := myfile.SelectFormat(reader, file)
 			if err != nil {
-				fmt.Printf("ERROR: %s", err)
+				fmt.Printf("ERROR: %s\n", err)
 				fmt.Printf("please try again \n\n")
 				continue
 			}

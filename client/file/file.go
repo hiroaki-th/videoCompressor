@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -18,15 +19,27 @@ type FileJson struct {
 }
 
 func SelectFile(reader *bufio.Reader) (*os.File, error) {
-	fmt.Printf("please input filename to send server\n")
+	fmt.Printf("please input filename you want to change format\n")
 	filename, err := reader.ReadString('\n')
 	if err != nil {
 		return nil, err
 	}
-
 	filename = strings.Trim(filename, "\n")
+	fmt.Printf("searching %s...\n\n", filename)
 
-	file, err := os.Open(filename)
+	err = FindFiles(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("select and input file path from above filepath list\n")
+	fullFilePath, err := reader.ReadString('\n')
+	if err != nil {
+		return nil, err
+	}
+	fullFilePath = strings.Trim(fullFilePath, "\n")
+
+	file, err := os.Open(fullFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -34,8 +47,32 @@ func SelectFile(reader *bufio.Reader) (*os.File, error) {
 	return file, nil
 }
 
-func SelectFormat(reader *bufio.Reader) (*FileJson, error) {
+func FindFiles(filename string) error {
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	findCmd := fmt.Sprintf(`find %s -type f -name %q -not -path "*/.*/*" 2>/dev/null`, home, filename)
+	result, err := exec.Command("sh", "-c", findCmd).CombinedOutput()
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() != 1 {
+			fmt.Println(exec.Command("sh", "-c", findCmd).String())
+			return err
+		}
+	}
+
+	fmt.Println(string(result))
+	return nil
+}
+
+func SelectFormat(reader *bufio.Reader, file *os.File) (*FileJson, error) {
 	fileJson := FileJson{}
+
+	filepath := string([]byte(file.Name()))
+	filename := strings.Split(filepath, "/")[len(strings.Split(filepath, "/"))-1]
+	fileJson.Name = filename
 
 	extension, err := selection(reader, "how do you want format file? tell me [.extension]")
 	if err != nil {
@@ -84,12 +121,12 @@ func SelectFormat(reader *bufio.Reader) (*FileJson, error) {
 
 	if isValid := ValidJson(&fileJson); !isValid {
 		fmt.Printf("please input format you like one more time\n\n")
-		return SelectFormat(reader)
+		return SelectFormat(reader, file)
 	}
 
 	if isOk, _ := ConfirmFileJson(reader, &fileJson); !isOk {
 		fmt.Printf("please input format you like one more time\n\n")
-		return SelectFormat(reader)
+		return SelectFormat(reader, file)
 	}
 
 	return &fileJson, nil
@@ -142,6 +179,7 @@ func validIntStr(intStr ...string) bool {
 
 func ConfirmFileJson(reader *bufio.Reader, fileJson *FileJson) (bool, error) {
 	fmt.Printf("Do you confirm to send this request? [y/n]\n")
+	fmt.Printf("Name: %s\n", fileJson.Name)
 	fmt.Printf("Extension: %s\n", fileJson.Extension)
 	fmt.Printf("Resolution: %s\n", fileJson.Resolution)
 	fmt.Printf("VF: %s\n", fileJson.VF)
