@@ -39,8 +39,6 @@ func CreateRequest(file *os.File, fileJson *myfile.FileJson) []byte {
 	body := Body{}
 
 	// get json and jsonSize
-	filename := string([]byte(file.Name()))
-	fileJson.Name = filename
 	byteJson, err := json.Marshal(fileJson)
 	if err != nil {
 		fmt.Println(err)

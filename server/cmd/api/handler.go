@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"os"
 )
 
@@ -31,6 +32,7 @@ func SaveFile(buff []byte) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(jsonData)
 
 	file, err := os.Create(path + jsonData.Name)
 	if err != nil {
