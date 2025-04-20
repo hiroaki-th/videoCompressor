@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"videoCompressorServer/utils"
 )
 
@@ -86,24 +87,19 @@ func processRequest(conn net.Conn, fCh chan []byte, errCh chan error) {
 func processFiles(fCh chan []byte, resCh chan []byte, errCh chan error) {
 	for {
 		file := <-fCh
-		savedFile, err := SaveFile(file)
-		if err != nil {
-			errCh <- err
-			continue
-		}
-		_, err = FormatFile(savedFile)
+		savedFile, fileJson, err := SaveFile(file)
 		if err != nil {
 			errCh <- err
 			continue
 		}
 
-		mock, err := mockFile()
+		formattedFile, err := FormatFile(savedFile, fileJson)
 		if err != nil {
 			errCh <- err
 			continue
 		}
 
-		resCh <- utils.NewResponse(uint8(200), mock)
+		resCh <- utils.NewResponse(uint8(http.StatusOK), formattedFile)
 	}
 }
 

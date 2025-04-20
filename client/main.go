@@ -61,19 +61,14 @@ func main() {
 			size, err := conn.Read(buff)
 			if err != nil {
 				fmt.Println(err)
-				y, _ := question("do you want format other file?", reader)
-				if y {
-					ok = true
-					response = make([]byte, 0)
-					totalSize = 0
-				}
+				os.Exit(-1)
 			}
 
 			if size > 0 {
 				response = append(response, buff[:size]...)
 			}
 
-			if len(response) > 11 && totalSize == 0 {
+			if len(response) > 11 {
 				if totalSize == 0 {
 					totalSize = cmd.GetTotalSize(response)
 				}

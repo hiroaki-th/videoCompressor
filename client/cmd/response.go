@@ -22,8 +22,7 @@ func ProcessResponse(buff []byte) error {
 	if err != nil {
 		return err
 	}
-	filePath := filepath.Join(homeDir, "Downloads/")
-	fmt.Println(filePath)
+	path := filepath.Join(homeDir, "Downloads/")
 
 	jsonSize := int(binary.BigEndian.Uint16(buff[:2]))
 	mediaTypeSize := int(int8(buff[2]))
@@ -35,16 +34,12 @@ func ProcessResponse(buff []byte) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("{\n status: %d,\n message: %s,\n}\n\n", jsonData.Status, jsonData.Message)
-
-	mediaType := "bin"
-	if mediaTypeSize > 0 {
-		mediaType = string(buff[11+jsonSize : 11+jsonSize+mediaTypeSize])
-	}
+	fmt.Printf("{\n status: %d,\n filename: %s,\n message: %s,\n}\n\n", jsonData.Status, jsonData.FileName, jsonData.Message)
 
 	if payloadSize > 0 {
+		path = filepath.Join(path, jsonData.FileName)
 		payload := buff[11+jsonSize+mediaTypeSize : 11+jsonSize+mediaTypeSize+payloadSize]
-		file, err := os.Create(filePath + "formattedFile." + mediaType)
+		file, err := os.Create(path)
 		if err != nil {
 			return err
 		}

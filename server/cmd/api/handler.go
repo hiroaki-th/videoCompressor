@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
+	"strings"
 )
 
 const path string = "./tmp/"
 
-type saveFileJson struct {
+type FileJson struct {
 	Name       string `json:"name"`
 	Extension  string `json:"extension"`
 	Resolution string `json:"resolution"`
@@ -18,7 +20,7 @@ type saveFileJson struct {
 	VF         string `json:"vf"`
 }
 
-func SaveFile(buff []byte) (*os.File, error) {
+func SaveFile(buff []byte) (*os.File, *FileJson, error) {
 	jsonSize := int(binary.BigEndian.Uint16(buff[:2]))
 	mediaTypeSize := int(int8(buff[2]))
 	payloadSize := int(binary.BigEndian.Uint64(buff[3:11]))
@@ -27,37 +29,65 @@ func SaveFile(buff []byte) (*os.File, error) {
 	_ = buff[11+jsonSize : 11+jsonSize+mediaTypeSize]
 	payload := buff[11+jsonSize+mediaTypeSize : 11+jsonSize+mediaTypeSize+payloadSize]
 
-	jsonData := saveFileJson{}
+	jsonData := FileJson{}
 	err := json.Unmarshal(jsonBin, &jsonData)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	fmt.Println(jsonData)
 
 	file, err := os.Create(path + jsonData.Name)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	_, err = file.Write(payload)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return file, nil
+	return file, &jsonData, nil
 }
 
-func FormatFile(file *os.File) (*os.File, error) {
-	return nil, nil
-}
+func FormatFile(file *os.File, fileJson *FileJson) (*os.File, error) {
 
-func mockFile() (*os.File, error) {
-	file, err := os.Open(path + "response.txt")
+	input := path + fileJson.Name
+	output := path + strings.Split(fileJson.Name, ".")[0] + fileJson.Extension
+
+	fileCmd := fmt.Sprintf(`ffmpeg -i %s`, input)
+
+	if fileJson.Resolution != "auto" {
+		fileCmd = fileCmd + fmt.Sprintf(` -s %s`, fileJson.Resolution)
+	}
+
+	if fileJson.VF != "auto" {
+		fileCmd = fileCmd + fmt.Sprintf(` -vf %s`, fileJson.VF)
+	}
+
+	if fileJson.FromSecond != 0 {
+		fileCmd = fileCmd + fmt.Sprintf(` -ss %d -to  %d`, fileJson.FromSecond, fileJson.ToSecond)
+	}
+
+	fileCmd = fileCmd + fmt.Sprintf(` %s`, output)
+
+	_, err := exec.Command("sh", "-c", fileCmd).CombinedOutput()
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() != 1 {
+			fmt.Println(exec.Command("sh", "-c", fileCmd).String())
+			return nil, err
+		}
+	}
+
+	err = os.Remove(path + fileJson.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	return file, nil
+	formattedFile, err := os.Open(output)
+	if err != nil {
+		return nil, err
+	}
+
+	return formattedFile, nil
 }
 
 func getTotalSize(buff []byte) int {
