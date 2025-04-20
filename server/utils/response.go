@@ -50,15 +50,14 @@ func NewResponse(status uint8, file *os.File, errs ...error) []byte {
 	body := Body{}
 
 	// get json and jsonSize
-	filename := string([]byte(file.Name()))
+	filename := strings.Split(file.Name(), "/")[len(strings.Split(file.Name(), "/"))-1]
 	respJson := ResponseJson{
 		Status:   status,
 		FileName: filename,
 	}
 	byteJson, err := json.Marshal(respJson)
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return ErrorResponse(uint8(0), err)
 	}
 	header.JsonSize = uint16(len(byteJson))
 	body.Json = byteJson
@@ -73,10 +72,15 @@ func NewResponse(status uint8, file *os.File, errs ...error) []byte {
 	fileBody := make([]byte, 104857600)
 	size, err := file.Read(fileBody)
 	if err != nil {
-		return nil
+		return ErrorResponse(uint8(0), err)
 	}
 	header.PayloadSize = uint64(size)
 	body.Payload = fileBody[:size]
+
+	err = os.Remove(file.Name())
+	if err != nil {
+		return ErrorResponse(uint8(0), err)
+	}
 
 	response := make([]byte, 0)
 	return binaryResponse(response, header, body)
